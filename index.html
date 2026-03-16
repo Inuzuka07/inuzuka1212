@@ -1,1 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5対5 バスケットゲーム</title>
 
+<style>
+
+body{
+margin:0;
+background:#0a3d62;
+color:white;
+font-family:sans-serif;
+text-align:center;
+}
+
+h2{
+margin:10px;
+}
+
+canvas{
+background:#f5a623;
+border:4px solid white;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>🏀 バスケットボール 5vs5</h2>
+<p>移動：矢印キー　シュート：スペース</p>
+
+<canvas id="game" width="800" height="500"></canvas>
+
+<script>
+
+const canvas=document.getElementById("game")
+const ctx=canvas.getContext("2d")
+
+let scoreBlue=0
+let scoreRed=0
+
+const players=[]
+const ball={
+x:400,
+y:250,
+holder:null,
+vx:0,
+vy:0
+}
+
+function createPlayers(){
+
+for(let i=0;i<5;i++){
+
+players.push({
+x:150,
+y:80+i*80,
+team:"blue",
+control:i==0
+})
+
+players.push({
+x:650,
+y:80+i*80,
+team:"red",
+control:false
+})
+
+}
+
+}
+
+createPlayers()
+
+let keys={}
+
+document.addEventListener("keydown",e=>{
+
+keys[e.key]=true
+
+if(e.key==" "){
+shoot()
+}
+
+})
+
+document.addEventListener("keyup",e=>{
+keys[e.key]=false
+})
+
+function movePlayer(p){
+
+if(p.control){
+
+if(keys["ArrowUp"])p.y-=3
+if(keys["ArrowDown"])p.y+=3
+if(keys["ArrowLeft"])p.x-=3
+if(keys["ArrowRight"])p.x+=3
+
+}else{
+
+p.x+=Math.random()*4-2
+p.y+=Math.random()*4-2
+
+}
+
+}
+
+function shoot(){
+
+if(ball.holder){
+
+let targetX=ball.holder.team=="blue"?750:50
+let targetY=250
+
+ball.vx=(targetX-ball.x)/30
+ball.vy=(targetY-ball.y)/30
+ball.holder=null
+
+}
+
+}
+
+function update(){
+
+players.forEach(p=>{
+
+movePlayer(p)
+
+if(ball.holder==null){
+
+let dx=p.x-ball.x
+let dy=p.y-ball.y
+
+if(Math.sqrt(dx*dx+dy*dy)<20){
+
+ball.holder=p
+
+}
+
+}
+
+})
+
+if(ball.holder){
+
+ball.x=ball.holder.x
+ball.y=ball.holder.y
+
+}else{
+
+ball.x+=ball.vx
+ball.y+=ball.vy
+
+ball.vx*=0.98
+ball.vy*=0.98
+
+}
+
+checkGoal()
+
+}
+
+function checkGoal(){
+
+if(ball.x>780 && ball.y>200 && ball.y<300){
+
+scoreBlue++
+resetBall()
+
+}
+
+if(ball.x<20 && ball.y>200 && ball.y<300){
+
+scoreRed++
+resetBall()
+
+}
+
+}
+
+function resetBall(){
+
+ball.x=400
+ball.y=250
+ball.vx=0
+ball.vy=0
+ball.holder=null
+
+}
+
+function drawPlayer(p){
+
+ctx.fillStyle=p.team=="blue"?"blue":"red"
+
+ctx.beginPath()
+ctx.arc(p.x,p.y-10,6,0,Math.PI*2)
+ctx.fill()
+
+ctx.fillRect(p.x-3,p.y-10,6,15)
+
+ctx.beginPath()
+ctx.moveTo(p.x,p.y+5)
+ctx.lineTo(p.x-6,p.y+15)
+ctx.moveTo(p.x,p.y+5)
+ctx.lineTo(p.x+6,p.y+15)
+ctx.stroke()
+
+}
+
+function draw(){
+
+ctx.clearRect(0,0,canvas.width,canvas.height)
+
+ctx.fillStyle="white"
+ctx.fillRect(20,200,5,100)
+ctx.fillRect(775,200,5,100)
+
+players.forEach(drawPlayer)
+
+ctx.fillStyle="orange"
+ctx.beginPath()
+ctx.arc(ball.x,ball.y,5,0,Math.PI*2)
+ctx.fill()
+
+ctx.fillStyle="white"
+ctx.font="20px sans-serif"
+ctx.fillText("Blue "+scoreBlue+" - "+scoreRed+" Red",350,30)
+
+}
+
+function loop(){
+
+update()
+draw()
+requestAnimationFrame(loop)
+
+}
+
+loop()
+
+</script>
+
+</body>
+</html>
